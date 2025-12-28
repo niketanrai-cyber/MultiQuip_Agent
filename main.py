@@ -26,6 +26,7 @@ html_content = """
     <title>Multiquip Chatbot</title>
     
     <link rel="icon" type="image/png" href="/static/multiquip_title.png">
+    
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
@@ -33,9 +34,10 @@ html_content = """
         :root {
             /* Light Mode */
             --bg-color: #ffffff;
-            --aurora-end: #e0f2fe; /* Soft Light Blue for bottom fade */
+            --aurora-end: #e0f2fe;
             
-            --text-color: #000000;
+            --text-color: #333333;
+            --heading-color: #103f54; 
             --header-bg: #ffffff;
             --border-color: #e0e0e0;
             --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
@@ -46,23 +48,16 @@ html_content = """
             --bot-bubble-bg: #ffffff;
             --bot-text-color: #0056b3; 
             
-            --input-area-bg: #ffffff;
+            --input-area-bg: rgba(255, 255, 255, 0.9);
             --input-box-bg: #f9f9f9;
             --input-border: #ddd;
             
-            /* Icon Container Colors */
-            --icon-bg-user: transparent;
-            --icon-bg-bot: transparent;
-            
-            /* --- VECTOR COLORS --- */
-            
-            /* Robot */
+            /* Vector Colors */
             --bot-outline: #103f54;
             --bot-face: #e0f7fa;
             --bot-body: #cfd8dc;
             --bot-cheek: #f48fb1;
 
-            /* User */
             --user-outline: #37474f;
             --user-skin: #ffe0b2;
             --user-hair: #5d4037;
@@ -74,7 +69,8 @@ html_content = """
             --bg-color: #121212;
             --aurora-end: #1e293b; 
             
-            --text-color: #ffffff;
+            --text-color: #e0e0e0;
+            --heading-color: #81d4fa;
             --header-bg: #1e1e1e;
             --border-color: #333333;
             --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
@@ -85,7 +81,7 @@ html_content = """
             --bot-bubble-bg: #1e1e1e;
             --bot-text-color: #66b2ff; 
             
-            --input-area-bg: #1e1e1e;
+            --input-area-bg: rgba(30, 30, 30, 0.9);
             --input-box-bg: #2c2c2c;
             --input-border: #444;
 
@@ -95,7 +91,6 @@ html_content = """
             --bot-body: #37474f;
             --bot-cheek: #ec407a;
 
-            /* User (Dark Mode) */
             --user-outline: #eceff1;
             --user-skin: #5d4037;
             --user-hair: #d7ccc8;
@@ -107,13 +102,10 @@ html_content = """
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            
-            /* BACKGROUND: Soft Aurora Gradient */
             background: linear-gradient(180deg, var(--bg-color) 60%, var(--aurora-end) 100%);
             background-attachment: fixed;
-            
             color: var(--text-color);
-            overflow: hidden;
+            overflow: hidden; 
             transition: background 0.3s, color 0.3s;
         }
 
@@ -123,8 +115,12 @@ html_content = """
         ::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 4px; }
         body.dark-mode ::-webkit-scrollbar-thumb { background-color: #444; }
 
-        .chat-container {
-            display: flex; flex-direction: column; width: 100%; height: 100vh;
+        /* --- MAIN LAYOUT (Vertical Stack) --- */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
         }
 
         /* --- HEADER --- */
@@ -135,10 +131,12 @@ html_content = """
             background-color: var(--header-bg);
             flex-shrink: 0;
             box-shadow: var(--shadow-sm);
-            z-index: 10;
+            z-index: 20;
+            height: 80px;
         }
         
-        .logo-img { height: 100px; width: auto; display: block; }
+        .logo-img { height: 60px; width: auto; display: block; }
+        .header-title { font-weight: bold; font-size: 24px; color: var(--text-color); margin-left: 15px;}
         .header-controls { display: flex; gap: 10px; }
 
         .btn {
@@ -154,11 +152,83 @@ html_content = """
             font-size: 18px; padding: 8px 12px; 
         }
 
-        /* --- CHAT HISTORY --- */
-        .chat-history {
-            flex: 1; padding: 20px 10%; overflow-y: auto;
-            display: flex; flex-direction: column; gap: 20px;
+        /* --- CONTENT WRAPPER (Splits Left/Right) --- */
+        .content-wrapper {
+            display: flex;
+            flex-direction: row; /* Side by side */
+            flex: 1; /* Takes all available height */
+            overflow: hidden; /* Prevent double scrollbars */
+        }
+
+        /* --- LEFT SIDEBAR (Description) --- */
+        .sidebar {
+            width: 35%; 
+            min-width: 300px;
+            max-width: 500px;
             background-color: transparent; 
+            border-right: 1px solid var(--border-color);
+            padding: 40px;
+            
+            /* KEY FIX 1: Align to top so header is visible */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; 
+            
+            /* KEY FIX 2: Enable scrolling but hide the scrollbar */
+            overflow-y: auto;
+            scrollbar-width: none; /* Firefox */
+        }
+        .sidebar::-webkit-scrollbar { display: none; /* Chrome/Safari */ }
+
+        .sidebar h3 {
+            font-size: 20px; /* KEY FIX 3: Set exactly to 20px */
+            font-weight: 600;
+            color: var(--text-color);
+            opacity: 0.9;
+            margin-bottom: 25px;
+            margin-top: 10px; /* Slight top spacing */
+            line-height: 1.4;
+        }
+
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .sidebar li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 18px;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .sidebar li::before {
+            content: "•";
+            color: var(--bot-text-color);
+            font-weight: bold;
+            font-size: 18px;
+            position: absolute;
+            left: 0;
+            top: -2px;
+        }
+
+
+        /* --- RIGHT CHAT AREA (Just the messages) --- */
+        .chat-container {
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            background: transparent;
+            position: relative;
+        }
+
+        .chat-history {
+            flex: 1; 
+            padding: 20px 5%; 
+            overflow-y: auto;
+            display: flex; flex-direction: column; gap: 20px;
+            background-color: transparent;
         }
 
         .message-row { display: flex; width: 100%; margin-bottom: 10px; }
@@ -166,11 +236,9 @@ html_content = """
         .message-row.bot { justify-content: flex-start; }
 
         .message-bubble {
-            max-width: 65%; padding: 15px 25px; border-radius: 12px;
+            max-width: 75%; padding: 15px 25px; border-radius: 12px;
             font-size: 16px; line-height: 1.6; position: relative;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            
-            /* Ensure text wraps to prevent bubble expansion */
             overflow-wrap: break-word; 
             word-wrap: break-word; 
         }
@@ -189,20 +257,17 @@ html_content = """
         }
         .bot .message-bubble * { color: var(--bot-text-color); }
 
-        /* --- MODERN AVATAR CONTAINER --- */
+        /* --- VECTOR ICONS --- */
         .avatar-icon {
-            width: 65px; height: 65px; 
+            width: 55px; height: 55px; 
             display: flex; align-items: center; justify-content: center;
             border-radius: 12px;
             margin: 0 15px; flex-shrink: 0;
             transition: all 0.3s ease;
             background: transparent; 
         }
-        
         .user .avatar-icon { order: 2; margin-left: 15px; margin-right: 0; }
         .bot .avatar-icon { order: 1; margin-right: 15px; margin-left: 0; }
-
-        /* --- VECTOR SVG STYLING --- */
         .char-svg { width: 100%; height: 100%; overflow: visible; }
 
         /* Robot CSS Variables */
@@ -219,8 +284,7 @@ html_content = """
         .user-fill-shirt { fill: var(--user-shirt); }
         .user-eye { fill: var(--user-outline); stroke: none; }
 
-
-        /* --- ANIMATIONS --- */
+        /* Animations */
         @keyframes botFloat { 0% { transform: translateY(0px); } 50% { transform: translateY(-6px); } 100% { transform: translateY(0px); } }
         .anim-bot-idle { animation: botFloat 3s ease-in-out infinite; }
 
@@ -233,61 +297,32 @@ html_content = """
         .anim-bot-thinking { animation: heartbeat 1.5s infinite ease-in-out; }
         .anim-bot-thinking .bot-eye { transform-origin: center; animation: blink 2s infinite; }
 
-
-        /* --- TABLE FIX (Keeps content inside bubble) --- */
-        .message-bubble table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin: 15px 0; 
-            font-size: 0.9em; 
-            
-            /* Strict Layout Control */
-            table-layout: fixed; /* Forces table to fit in 100% width */
-            word-wrap: break-word; /* Breaks long words if needed */
-        }
-
-        .message-bubble th { 
-            background-color: rgba(0,0,0,0.05); 
-            font-weight: bold; 
-            text-align: left; 
-            border: 1px solid var(--border-color); 
-            padding: 8px; 
-            overflow: hidden; 
-        }
-
-        .message-bubble td { 
-            border: 1px solid var(--border-color); 
-            padding: 8px; 
-            text-align: left; 
-            
-            /* Wrap Text */
-            word-break: break-word; 
-            overflow-wrap: break-word;
-        }
-
+        /* Table Fix */
+        .message-bubble table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.9em; table-layout: fixed; word-wrap: break-word; }
+        .message-bubble th { background-color: rgba(0,0,0,0.05); font-weight: bold; text-align: left; border: 1px solid var(--border-color); padding: 8px; }
+        .message-bubble td { border: 1px solid var(--border-color); padding: 8px; text-align: left; word-break: break-word; overflow-wrap: break-word; }
 
         /* Typing Indicator */
-        .typing-indicator span {
-            display: inline-block; width: 6px; height: 6px;
-            background-color: var(--bot-text-color); border-radius: 50%;
-            margin-right: 4px; opacity: 0.6;
-            animation: typing 1.4s infinite ease-in-out both;
-        }
+        .typing-indicator span { display: inline-block; width: 6px; height: 6px; background-color: var(--bot-text-color); border-radius: 50%; margin-right: 4px; opacity: 0.6; animation: typing 1.4s infinite ease-in-out both; }
         .typing-indicator span:nth-child(1) { animation-delay: 0s; }
         .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
         .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
         @keyframes typing { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
 
-        /* --- FOOTER --- */
+        /* --- INPUT AREA (FULL WIDTH BOTTOM) --- */
         .input-area {
-            padding: 15px;
+            padding: 20px;
             background-color: var(--input-area-bg);
+            backdrop-filter: blur(10px);
             border-top: 1px solid var(--border-color);
             flex-shrink: 0;
             box-shadow: 0 -1px 3px rgba(0,0,0,0.05);
+            
+            /* Full width across bottom */
+            width: 100%;
         }
         .input-box {
-            display: flex; gap: 15px; width: 100%; max-width: 700px;
+            display: flex; gap: 15px; width: 100%; max-width: 1200px;
             margin: 0 auto; align-items: center; 
         }
         input[type="text"] {
@@ -296,23 +331,19 @@ html_content = """
             border-radius: 8px; outline: none; font-size: 16px;
             background-color: var(--input-box-bg);
             color: var(--text-color);
-            height: 48px; 
+            height: 50px; 
         }
-        input[type="text"]:focus {
-            border-color: #888;
-            box-shadow: 0 0 0 2px rgba(0,0,0,0.05);
-        }
+        input[type="text"]:focus { border-color: #888; box-shadow: 0 0 0 2px rgba(0,0,0,0.05); }
 
         button.send-btn {
             background-color: #1f1f1f; border: none; border-radius: 10px;
-            width: 48px; height: 48px; cursor: pointer;
+            width: 50px; height: 50px; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             padding: 0; flex-shrink: 0; transition: all 0.2s ease;
         }
         button.send-btn:hover { background-color: #000; transform: scale(1.05); }
         body.dark-mode button.send-btn { background-color: #ffffff; }
         body.dark-mode button.send-btn:hover { background-color: #e0e0e0; }
-        
         button.send-btn svg { width: 22px; height: 22px; fill: white; margin-left: 2px; margin-top: 2px; }
         body.dark-mode button.send-btn svg { fill: #000000; }
 
@@ -320,11 +351,12 @@ html_content = """
 </head>
 <body>
 
-<div class="chat-container">
+<div class="app-container">
+    
     <div class="header">
         <div style="display: flex; align-items: center;">
-            <img src="/static/multiquip.png" alt="Multiquip" class="logo-img" onerror="this.style.display='none'; document.getElementById('fallback-title').style.display='block';">
-            <span id="fallback-title" style="display: none; font-weight: bold; font-size: 24px;">Multiquip</span>
+            <img src="/static/multiquip.png" alt="Logo" class="logo-img" onerror="this.style.display='none'; document.getElementById('fallback-icon').style.display='block';">
+            <span id="fallback-icon" style="display: none; font-size: 30px; margin-right: 10px;">🏗️</span>
         </div>
         
         <div class="header-controls">
@@ -335,8 +367,25 @@ html_content = """
         </div>
     </div>
 
-    <div class="chat-history" id="chat-box">
+    <div class="content-wrapper">
+        
+        <div class="sidebar">
+            <h3>Primary Objectives and Functional Highlights</h3>
+            <ul>
+                <li>The primary purpose of this agent is to provide accurate part information to users based on the available datasets.</li>
+                <li>It can also retrieve and share details of pre-included parts along with their corresponding parent parts.</li>
+                <li>The agent is capable of understanding and responding to user queries expressed in slang or informal language, ensuring better usability and accessibility.</li>
+                <li>The agent ensures quick and reliable responses, improving user efficiency and reducing manual search time.</li>
+                <li>It supports scalable performance, allowing it to handle multiple user requests seamlessly without impacting accuracy or speed.</li>
+            </ul>
         </div>
+
+        <div class="chat-container">
+            <div class="chat-history" id="chat-box">
+                </div>
+        </div>
+
+    </div>
 
     <div class="input-area">
         <form class="input-box" onsubmit="sendMessage(event)">
@@ -348,6 +397,7 @@ html_content = """
             </button>
         </form>
     </div>
+
 </div>
 
 <script>
@@ -361,7 +411,6 @@ html_content = """
     // VECTOR ASSETS (SVGs)
     // ===========================================
 
-    // 1. ROBOT DEFINITION
     const ROBOT_DRAWING = `
         <svg viewBox="0 0 100 100" class="char-svg">
             <line x1="50" y1="20" x2="50" y2="10" class="bot-stroke" />
@@ -378,7 +427,6 @@ html_content = """
         </svg>
     `;
 
-    // 2. ROBOT THINKING
     const ROBOT_THINKING_DRAWING = `
         <svg viewBox="0 0 100 100" class="char-svg">
             <line x1="85" y1="20" x2="90" y2="15" class="bot-stroke" style="stroke: #ff9800;" />
@@ -395,7 +443,6 @@ html_content = """
         </svg>
     `;
 
-    // 3. USER DEFINITION
     const USER_DRAWING = `
         <svg viewBox="0 0 100 100" class="char-svg">
             <path d="M20,85 Q50,95 80,85 L80,75 Q80,65 65,65 L35,65 Q20,65 20,75 Z" class="user-stroke user-fill-shirt" />
@@ -407,7 +454,6 @@ html_content = """
         </svg>
     `;
 
-    // Combine them with animation classes
     const BOT_IDLE_HTML = `<div class="anim-bot-idle">${ROBOT_DRAWING}</div>`;
     const BOT_THINKING_HTML = `<div class="anim-bot-thinking">${ROBOT_THINKING_DRAWING}</div>`;
     const USER_HTML = `<div class="anim-user-idle">${USER_DRAWING}</div>`;
@@ -560,7 +606,7 @@ async def chat_endpoint(payload: dict):
     except Exception as e:
         return {"reply": f"**System Error:** {str(e)}"}
 
-if os.path.exists("multiquip.png"):
+if os.path.exists("multiquip.png") or os.path.exists("multiquip_title.png"):
     app.mount("/static", StaticFiles(directory="."), name="static")
 
 if __name__ == "__main__":
