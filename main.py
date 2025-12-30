@@ -180,8 +180,8 @@ html_content = """
         }
         .sidebar::-webkit-scrollbar { display: none; /* Chrome/Safari */ }
 
-        .sidebar h3 {
-            font-size: 20px; /* KEY FIX 3: Set exactly to 20px */
+        .sidebar h2 {
+            font-size: 24px; /* KEY FIX 3: Set exactly to 20px */
             font-weight: 600;
             color: var(--text-color);
             opacity: 0.9;
@@ -200,7 +200,7 @@ html_content = """
             padding-left: 20px;
             margin-bottom: 18px;
             line-height: 1.6;
-            font-size: 15px;
+            font-size: 18px;
         }
 
         .sidebar li::before {
@@ -609,6 +609,7 @@ if os.path.exists("multiquip.png") or os.path.exists("multiquip_title.png"):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
 
 
 
