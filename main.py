@@ -169,24 +169,24 @@ html_content = """
             border-right: 1px solid var(--border-color);
             padding: 40px;
             
-            /* KEY FIX 1: Align to top so header is visible */
+            /* Align to top so header is visible */
             display: flex;
             flex-direction: column;
             justify-content: flex-start; 
             
-            /* KEY FIX 2: Enable scrolling but hide the scrollbar */
+            /* Enable scrolling but hide the scrollbar */
             overflow-y: auto;
             scrollbar-width: none; /* Firefox */
         }
         .sidebar::-webkit-scrollbar { display: none; /* Chrome/Safari */ }
 
         .sidebar h2 {
-            font-size: 24px; /* KEY FIX 3: Set exactly to 20px */
+            font-size: 24px;
             font-weight: 600;
             color: var(--text-color);
             opacity: 0.9;
             margin-bottom: 25px;
-            margin-top: 10px; /* Slight top spacing */
+            margin-top: 10px;
             line-height: 1.4;
         }
 
@@ -347,6 +347,17 @@ html_content = """
         button.send-btn svg { width: 22px; height: 22px; fill: white; margin-left: 2px; margin-top: 2px; }
         body.dark-mode button.send-btn svg { fill: #000000; }
 
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .header { height: 80px; }
+            .logo-img { height: 60px; }
+            .content-wrapper { flex-direction: column; }
+            .sidebar { width: 100%; max-width: none; max-height: 25vh; border-right: none; border-bottom: 1px solid var(--border-color); padding: 15px; }
+            .sidebar h2 { font-size: 18px; margin-bottom: 10px; }
+            .sidebar li { font-size: 14px; margin-bottom: 8px; }
+            .chat-container { height: 75vh; }
+        }
+
     </style>
 </head>
 <body>
@@ -380,7 +391,7 @@ html_content = """
 
         <div class="chat-container">
             <div class="chat-history" id="chat-box">
-                </div>
+            </div>
         </div>
 
     </div>
@@ -487,7 +498,7 @@ html_content = """
         chatBox.appendChild(rowDiv);
     }
 
-    function appendMessage(role, text, isHtml = false) {
+    function appendMessage(role, text, isHtml = false, animate = false) {
         const rowDiv = document.createElement('div');
         rowDiv.className = `message-row ${role}`;
         
@@ -499,15 +510,35 @@ html_content = """
         const bubbleDiv = document.createElement('div');
         bubbleDiv.className = 'message-bubble';
         
-        if (isHtml) {
-            bubbleDiv.innerHTML = marked.parse(text); 
-        } else {
-            bubbleDiv.innerText = text;
-        }
-        
         rowDiv.appendChild(avatarDiv);
         rowDiv.appendChild(bubbleDiv);
         chatBox.appendChild(rowDiv);
+        
+        if (animate && role === 'bot') {
+            let i = 0;
+            const speed = 10; // Speed of typing
+            
+            function typeWriter() {
+                if (i < text.length) {
+                    i++;
+                    const currentText = text.substring(0, i);
+                    // Streaming Markdown
+                    bubbleDiv.innerHTML = isHtml ? marked.parse(currentText) : currentText;
+                    
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    setTimeout(typeWriter, speed);
+                }
+            }
+            typeWriter();
+        } else {
+            // Instant render
+            if (isHtml) {
+                bubbleDiv.innerHTML = marked.parse(text); 
+            } else {
+                bubbleDiv.innerText = text;
+            }
+        }
+        
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
@@ -516,7 +547,7 @@ html_content = """
         const message = inputField.value.trim();
         if (!message) return;
 
-        appendMessage('user', message, false);
+        appendMessage('user', message, false, false);
         inputField.value = '';
         inputField.disabled = true;
 
@@ -545,11 +576,11 @@ html_content = """
             const data = await response.json();
             
             document.getElementById(loadingId).remove();
-            appendMessage('bot', data.reply, true);
+            appendMessage('bot', data.reply, true, true);
             
         } catch (error) {
             document.getElementById(loadingId).remove();
-            appendMessage('bot', '⚠️ Error: Could not connect to the server.', false);
+            appendMessage('bot', '⚠️ Error: Could not connect to the server.', false, false);
         } finally {
             inputField.disabled = false;
             inputField.focus();
@@ -609,8 +640,3 @@ if os.path.exists("multiquip.png") or os.path.exists("multiquip_title.png"):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-
-
-
-
