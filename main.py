@@ -370,13 +370,11 @@ html_content = """
     <div class="content-wrapper">
         
         <div class="sidebar">
-            <h3>Primary Objectives and Functional Highlights</h3>
+            <h2>Ask me About</h2>
             <ul>
-                <li>The primary purpose of this agent is to provide accurate part information to users based on the available datasets.</li>
-                <li>It can also retrieve and share details of pre-included parts along with their corresponding parent parts.</li>
-                <li>The agent is capable of understanding and responding to user queries expressed in slang or informal language, ensuring better usability and accessibility.</li>
-                <li>The agent ensures quick and reliable responses, improving user efficiency and reducing manual search time.</li>
-                <li>It supports scalable performance, allowing it to handle multiple user requests seamlessly without impacting accuracy or speed.</li>
+                <li>Part Information for various models by providing the model number</li>
+                <li>I can also answer look up parts based on common slangs</li>
+                <li>I can display Images for various assembly drawings</li>
             </ul>
         </div>
 
@@ -611,3 +609,4 @@ if os.path.exists("multiquip.png") or os.path.exists("multiquip_title.png"):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
