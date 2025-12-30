@@ -302,12 +302,33 @@ html_content = """
         .message-bubble th { background-color: rgba(0,0,0,0.05); font-weight: bold; text-align: left; border: 1px solid var(--border-color); padding: 8px; }
         .message-bubble td { border: 1px solid var(--border-color); padding: 8px; text-align: left; word-break: break-word; overflow-wrap: break-word; }
 
-        /* Typing Indicator */
-        .typing-indicator span { display: inline-block; width: 6px; height: 6px; background-color: var(--bot-text-color); border-radius: 50%; margin-right: 4px; opacity: 0.6; animation: typing 1.4s infinite ease-in-out both; }
-        .typing-indicator span:nth-child(1) { animation-delay: 0s; }
-        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes typing { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+        /* --- REALISTIC LOADING ANIMATION --- */
+        .loading-text {
+            font-style: italic;
+            color: var(--bot-text-color);
+            opacity: 1;
+            font-size: 0.95em;
+            /* Smooth fade transition */
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        /* Fade out state */
+        .loading-text.fade-out {
+            opacity: 0;
+        }
+        
+        /* Animated Dots */
+        .loading-dots::after {
+            content: ' .';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: ' .'; }
+            40% { content: ' ..'; }
+            60% { content: ' ...'; }
+            80%, 100% { content: ''; }
+        }
 
         /* --- INPUT AREA (FULL WIDTH BOTTOM) --- */
         .input-area {
@@ -552,20 +573,35 @@ html_content = """
         inputField.disabled = true;
 
         const loadingId = 'loading-' + Date.now();
+        const loadingTextId = 'loading-text-' + Date.now();
         const loadingRow = document.createElement('div');
         loadingRow.className = 'message-row bot';
         loadingRow.id = loadingId;
         
+        // --- REALISTIC AGENT ANIMATION START ---
         loadingRow.innerHTML = `
             <div class="avatar-icon">${BOT_THINKING_HTML}</div>
             <div class="message-bubble">
-                <div class="typing-indicator">
-                    <span></span><span></span><span></span>
-                </div>
+                <span id="${loadingTextId}" class="loading-text">Agent is looking for the requested Info<span class="loading-dots"></span></span>
             </div>
         `;
         chatBox.appendChild(loadingRow);
         chatBox.scrollTop = chatBox.scrollHeight;
+
+        // --- ANIMATION STEP 2: Transition Text after 3.5 seconds ---
+        const textSwitchTimer = setTimeout(() => {
+            const textElement = document.getElementById(loadingTextId);
+            if (textElement) {
+                // 1. Fade Out
+                textElement.classList.add('fade-out');
+                
+                // 2. Wait 0.5s for fade to finish, then Swap Text and Fade In
+                setTimeout(() => {
+                    textElement.innerHTML = `Agent is generating the response for you<span class="loading-dots"></span>`;
+                    textElement.classList.remove('fade-out');
+                }, 500); 
+            }
+        }, 3500);
 
         try {
             const response = await fetch('/chat', {
@@ -575,10 +611,15 @@ html_content = """
             });
             const data = await response.json();
             
+            // Stop animation logic
+            clearTimeout(textSwitchTimer);
             document.getElementById(loadingId).remove();
+            
+            // Show actual response with typing effect
             appendMessage('bot', data.reply, true, true);
             
         } catch (error) {
+            clearTimeout(textSwitchTimer);
             document.getElementById(loadingId).remove();
             appendMessage('bot', '⚠️ Error: Could not connect to the server.', false, false);
         } finally {
