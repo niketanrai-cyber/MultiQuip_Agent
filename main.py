@@ -1,9 +1,10 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-import requests
+import httpx
 import uvicorn
 import os
+from collections import deque
 
 app = FastAPI()
 
@@ -15,7 +16,13 @@ BOOMI_USERNAME = "Chatbot-POC@multiquipinc-U9F4Z5.0FN17D"
 BOOMI_PASSWORD = "f9c03846-70a1-4d53-bc80-bab2cfdfe35d"
 
 # ==========================================
-# HTML & CSS UI
+# MEMORY STORAGE
+# ==========================================
+# Stores the last 10 messages for every active user session.
+session_storage = {} 
+
+# ==========================================
+# HTML & CSS UI (FULL VERSION)
 # ==========================================
 html_content = """
 <!DOCTYPE html>
@@ -505,6 +512,14 @@ html_content = """
             themeIcon.innerText = '🌙';
         }
     }
+    
+    // --- SESSION MANAGEMENT (NEW) ---
+    // Generate a unique ID for this browser tab session
+    let sessionId = sessionStorage.getItem('chatSessionId');
+    if (!sessionId) {
+        sessionId = 'sess-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+        sessionStorage.setItem('chatSessionId', sessionId);
+    }
 
     // --- CHAT LOGIC ---
 
@@ -604,10 +619,11 @@ html_content = """
         }, 3500);
 
         try {
+            // SENDING SESSION_ID WITH REQUEST
             const response = await fetch('/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: message })
+                body: JSON.stringify({ message: message, session_id: sessionId })
             });
             const data = await response.json();
             
@@ -637,6 +653,10 @@ html_content = """
             <div class="message-bubble"><p>Conversation cleared.</p></div>
         `;
         chatBox.appendChild(rowDiv);
+        
+        // Optional: Reset Session ID to force new history on backend
+        sessionId = 'sess-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+        sessionStorage.setItem('chatSessionId', sessionId);
     }
 </script>
 
@@ -645,7 +665,7 @@ html_content = """
 """
 
 # ==========================================
-# SERVER LOGIC
+# SERVER LOGIC (UPDATED WITH MEMORY)
 # ==========================================
 @app.get("/", response_class=HTMLResponse)
 async def get_ui():
@@ -654,26 +674,51 @@ async def get_ui():
 @app.post("/chat")
 async def chat_endpoint(payload: dict):
     user_message = payload.get("message", "")
+    session_id = payload.get("session_id", "default_guest")
+
+    # 1. Initialize memory if needed
+    if session_id not in session_storage:
+        session_storage[session_id] = deque(maxlen=10)
+    
+    # 2. Add User Message
+    session_storage[session_id].append({"role": "user", "content": user_message})
+
+    # 3. Send FULL HISTORY to Boomi
+    full_history_payload = list(session_storage[session_id])
+
     try:
-        response = requests.post(
-            BOOMI_URL,
-            headers={"Content-Type": "text/plain"},
-            data=user_message,
-            auth=(BOOMI_USERNAME, BOOMI_PASSWORD),
-            timeout=120
-        )
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                BOOMI_URL,
+                headers={"Content-Type": "application/json"},
+                json=full_history_payload, # Sends the list of history
+                auth=(BOOMI_USERNAME, BOOMI_PASSWORD),
+                timeout=120.0
+            )
+            
         if response.status_code == 200:
             data = response.json()
             if isinstance(data, list) and data:
-                content = data[0].get("content", "No content")
+                bot_reply = data[0].get("content", "No content")
             elif isinstance(data, dict):
-                content = data.get("content", "No content")
+                bot_reply = data.get("content", "No content")
             else:
-                content = "Empty response"
-            return {"reply": content}
+                bot_reply = "Empty response"
+            
+            # 4. Add Bot Reply to Memory
+            session_storage[session_id].append({"role": "assistant", "content": bot_reply})
+            
+            return {"reply": bot_reply}
         else:
+            # If error, remove the last user message so we don't confuse the AI next time
+            session_storage[session_id].pop() 
             return {"reply": f"**Error {response.status_code}:** Unable to fetch data."}
+            
+    except httpx.RequestError as e:
+        session_storage[session_id].pop() 
+        return {"reply": f"**Connection Error:** {str(e)}"}
     except Exception as e:
+        session_storage[session_id].pop() 
         return {"reply": f"**System Error:** {str(e)}"}
 
 if os.path.exists("multiquip.png") or os.path.exists("multiquip_title.png"):
