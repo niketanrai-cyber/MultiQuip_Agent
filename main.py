@@ -242,13 +242,49 @@ html_content = """
         .message-row.user { justify-content: flex-end; }
         .message-row.bot { justify-content: flex-start; }
 
+        /* --- BUBBLE FIX (Prevents explosion) --- */
         .message-bubble {
-            max-width: 75%; padding: 15px 25px; border-radius: 12px;
-            font-size: 16px; line-height: 1.6; position: relative;
+            max-width: 75%; 
+            padding: 15px 25px; 
+            border-radius: 12px;
+            font-size: 16px; 
+            line-height: 1.6; 
+            position: relative;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            overflow-wrap: break-word; 
-            word-wrap: break-word; 
+            
+            /* CRITICAL FIXES BELOW */
+            overflow-wrap: break-word; /* Forces text to wrap */
+            word-wrap: break-word;     /* Legacy support */
+            min-width: 0;              /* Flexbox fix */
         }
+
+        /* --- IMAGE FIX (Fits image to box) --- */
+        .message-bubble img {
+            max-width: 100% !important; /* Never wider than the bubble */
+            height: auto !important;    /* Maintain aspect ratio */
+            border-radius: 8px;
+            margin-top: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: block;
+        }
+
+        /* --- TABLE FIX (Adds scrollbar if table is too big) --- */
+        .message-bubble table {
+            display: block;          /* Allows us to set overflow */
+            width: 100%;             /* Fill the bubble */
+            overflow-x: auto;        /* Adds a scrollbar ONLY if needed */
+            margin: 15px 0;
+            border-collapse: collapse;
+        }
+
+        /* Keep cells readable */
+        .message-bubble th, .message-bubble td {
+            white-space: nowrap;     /* Keeps data on one line (cleaner) */
+            padding: 8px 12px;       /* Adds breathing room */
+            border: 1px solid var(--border-color);
+        }
+        
+        .message-bubble th { background-color: rgba(0,0,0,0.05); font-weight: bold; text-align: left; }
 
         /* Colors */
         .user .message-bubble {
@@ -303,11 +339,6 @@ html_content = """
         
         .anim-bot-thinking { animation: heartbeat 1.5s infinite ease-in-out; }
         .anim-bot-thinking .bot-eye { transform-origin: center; animation: blink 2s infinite; }
-
-        /* Table Fix */
-        .message-bubble table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.9em; table-layout: fixed; word-wrap: break-word; }
-        .message-bubble th { background-color: rgba(0,0,0,0.05); font-weight: bold; text-align: left; border: 1px solid var(--border-color); padding: 8px; }
-        .message-bubble td { border: 1px solid var(--border-color); padding: 8px; text-align: left; word-break: break-word; overflow-wrap: break-word; }
 
         /* --- REALISTIC LOADING ANIMATION --- */
         .loading-text {
