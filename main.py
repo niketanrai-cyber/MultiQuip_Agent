@@ -560,7 +560,7 @@ html_content = """
         rowDiv.className = 'message-row bot';
         rowDiv.innerHTML = `
             <div class="avatar-icon">${BOT_IDLE_HTML}</div>
-            <div class="message-bubble"><p>Hello! I am your Multiquip Assistant.</p></div>
+            <div class="message-bubble"><p>Hello! Welcome to AskMQ. Please provide the model number of your MQ product, and I can provide parts information and images.</p></div>
         `;
         chatBox.appendChild(rowDiv);
     }
@@ -583,7 +583,7 @@ html_content = """
         
         if (animate && role === 'bot') {
             let i = 0;
-            const speed = 10; // Speed of typing
+            const speed = 5; // Speed of typing
             
             function typeWriter() {
                 if (i < text.length) {
@@ -628,7 +628,7 @@ html_content = """
         loadingRow.innerHTML = `
             <div class="avatar-icon">${BOT_THINKING_HTML}</div>
             <div class="message-bubble">
-                <span id="${loadingTextId}" class="loading-text">Agent is looking for the requested Info<span class="loading-dots"></span></span>
+                <span id="${loadingTextId}" class="loading-text">AskMQ is looking for the requested Info<span class="loading-dots"></span></span>
             </div>
         `;
         chatBox.appendChild(loadingRow);
@@ -643,7 +643,7 @@ html_content = """
                 
                 // 2. Wait 0.5s for fade to finish, then Swap Text and Fade In
                 setTimeout(() => {
-                    textElement.innerHTML = `Agent is generating the response for you<span class="loading-dots"></span>`;
+                    textElement.innerHTML = `AskMQ is generating the response for you<span class="loading-dots"></span>`;
                     textElement.classList.remove('fade-out');
                 }, 500); 
             }
@@ -757,3 +757,4 @@ if os.path.exists("multiquip.png") or os.path.exists("multiquip_title.png"):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
