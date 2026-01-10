@@ -583,7 +583,7 @@ html_content = """
         
         if (animate && role === 'bot') {
             let i = 0;
-            const speed = 2; // Speed of typing
+            const speed = 1; // Speed of typing
             
             function typeWriter() {
                 if (i < text.length) {
@@ -757,5 +757,6 @@ if os.path.exists("multiquip.png") or os.path.exists("multiquip_title.png"):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
 
 
