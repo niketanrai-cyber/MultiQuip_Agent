@@ -475,6 +475,23 @@ html_content = """
     const body = document.body;
     const themeIcon = document.getElementById('theme-icon');
 
+    // ==========================================
+    // 1. CONFIGURE MARKED (NEW TAB FIX)
+    // ==========================================
+    const renderer = new marked.Renderer();
+    
+    // Rule: Open all Links in New Tab
+    renderer.link = function(href, title, text) {
+        return `<a target="_blank" rel="noopener noreferrer" href="${href}" title="${title || ''}">${text}</a>`;
+    };
+
+    // Rule: Make Images Clickable & Open in New Tab
+    renderer.image = function(href, title, text) {
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer"><img src="${href}" alt="${text}" title="${title || ''}"></a>`;
+    };
+
+    marked.setOptions({ renderer: renderer });
+
     // ===========================================
     // VECTOR ASSETS (SVGs)
     // ===========================================
@@ -757,6 +774,3 @@ if os.path.exists("multiquip.png") or os.path.exists("multiquip_title.png"):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-
-
