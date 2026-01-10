@@ -475,23 +475,37 @@ html_content = """
     const body = document.body;
     const themeIcon = document.getElementById('theme-icon');
 
-    // ==========================================
-    // 1. CONFIGURE MARKED (NEW TAB FIX)
+// ==========================================
+    // 1. CONFIGURE MARKED (NEW TAB FIX - ROBUST)
     // ==========================================
     const renderer = new marked.Renderer();
     
-    // Rule: Open all Links in New Tab
+    // Rule: Open all Links in New Tab (Safe Mode)
     renderer.link = function(href, title, text) {
-        return `<a target="_blank" rel="noopener noreferrer" href="${href}" title="${title || ''}">${text}</a>`;
+        const safeHref = href || '#';
+        const safeTitle = title || '';
+        // If text is missing or 'undefined', show the URL instead
+        const safeText = (text && text !== 'undefined') ? text : safeHref;
+        
+        return `<a target="_blank" rel="noopener noreferrer" href="${safeHref}" title="${safeTitle}">${safeText}</a>`;
     };
 
-    // Rule: Make Images Clickable & Open in New Tab
+    // Rule: Make Images Clickable & Open in New Tab (Safe Mode)
     renderer.image = function(href, title, text) {
-        return `<a href="${href}" target="_blank" rel="noopener noreferrer"><img src="${href}" alt="${text}" title="${title || ''}"></a>`;
+        const safeHref = href || '';
+        const safeTitle = title || '';
+        const safeAlt = (text && text !== 'undefined') ? text : 'Image';
+        
+        // If the image URL is empty/undefined, don't show a broken icon
+        if (!safeHref || safeHref === 'undefined') {
+            return ''; 
+        }
+
+        return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer"><img src="${safeHref}" alt="${safeAlt}" title="${safeTitle}"></a>`;
     };
 
     marked.setOptions({ renderer: renderer });
-
+    
     // ===========================================
     // VECTOR ASSETS (SVGs)
     // ===========================================
@@ -774,3 +788,4 @@ if os.path.exists("multiquip.png") or os.path.exists("multiquip_title.png"):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
