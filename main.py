@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 import httpx
 import uvicorn
 import os
-from collections import deque
+
 
 app = FastAPI()
 
@@ -167,58 +167,6 @@ html_content = """
             overflow: hidden; /* Prevent double scrollbars */
         }
 
-        /* --- LEFT SIDEBAR (Description) --- */
-        .sidebar {
-            width: 35%; 
-            min-width: 300px;
-            max-width: 500px;
-            background-color: transparent; 
-            border-right: 1px solid var(--border-color);
-            padding: 40px;
-            
-            /* Align to top so header is visible */
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start; 
-            
-            /* Enable scrolling but hide the scrollbar */
-            overflow-y: auto;
-            scrollbar-width: none; /* Firefox */
-        }
-        .sidebar::-webkit-scrollbar { display: none; /* Chrome/Safari */ }
-
-        .sidebar h2 {
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--text-color);
-            opacity: 0.9;
-            margin-bottom: 25px;
-            margin-top: 10px;
-            line-height: 1.4;
-        }
-
-        .sidebar ul {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        .sidebar li {
-            position: relative;
-            padding-left: 20px;
-            margin-bottom: 18px;
-            line-height: 1.6;
-            font-size: 18px;
-        }
-
-        .sidebar li::before {
-            content: "•";
-            color: var(--bot-text-color);
-            font-weight: bold;
-            font-size: 18px;
-            position: absolute;
-            left: 0;
-            top: -2px;
-        }
 
 
         /* --- RIGHT CHAT AREA (Just the messages) --- */
@@ -411,10 +359,6 @@ html_content = """
             .header { height: 80px; }
             .logo-img { height: 60px; }
             .content-wrapper { flex-direction: column; }
-            .sidebar { width: 100%; max-width: none; max-height: 25vh; border-right: none; border-bottom: 1px solid var(--border-color); padding: 15px; }
-            .sidebar h2 { font-size: 18px; margin-bottom: 10px; }
-            .sidebar li { font-size: 14px; margin-bottom: 8px; }
-            .chat-container { height: 75vh; }
         }
 
     </style>
@@ -439,14 +383,6 @@ html_content = """
 
     <div class="content-wrapper">
         
-        <div class="sidebar">
-            <h2>Ask me About</h2>
-            <ul>
-                <li>Part Information for various models by providing the model number</li>
-                <li>I can also answer look up parts based on common slangs</li>
-                <li>I can display Images for various assembly drawings</li>
-            </ul>
-        </div>
 
         <div class="chat-container">
             <div class="chat-history" id="chat-box">
@@ -472,11 +408,28 @@ html_content = """
     const chatBox = document.getElementById('chat-box');
     const sendBtn = document.getElementById('send-btn');
     const inputField = document.getElementById('user-input');
-    const body = document.body;
     const themeIcon = document.getElementById('theme-icon');
   
     // ===========================================
-    // VECTOR ASSETS (SVGs)
+    // MARKED.JS CONFIGURATION (LINKS & IMAGES)
+    // ===========================================
+    const renderer = new marked.Renderer();
+
+    // 1. Open links in new tab
+    renderer.link = function({ href, title, text }) {
+        return `<a href="${href}" title="${title || ''}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+    };
+
+    // 2. Wrap images in a link to open in new tab
+    renderer.image = function({ href, title, text }) {
+        return `
+            <a href="${href}" target="_blank" rel="noopener noreferrer">
+                <img src="${href}" alt="${text}" title="${title || ''}" />
+            </a>
+        `;
+    };
+
+    marked.use({ renderer });
     // ===========================================
 
     const ROBOT_DRAWING = `
@@ -709,13 +662,17 @@ async def chat_endpoint(payload: dict):
 
     # 1. Initialize memory if needed
     if session_id not in session_storage:
-        session_storage[session_id] = deque(maxlen=10)
+        session_storage[session_id] = []
     
     # 2. Add User Message
     session_storage[session_id].append({"role": "user", "content": user_message})
 
-    # 3. Send FULL HISTORY to Boomi
-    full_history_payload = list(session_storage[session_id])
+    # 3. Context Pinning Logic (First 2 + Last 15)
+    history = session_storage[session_id]
+    if len(history) > 17:
+        full_history_payload = history[:2] + history[-15:]
+    else:
+        full_history_payload = history
 
     try:
         async with httpx.AsyncClient() as client:
@@ -757,5 +714,3 @@ if os.path.exists("multiquip.png") or os.path.exists("multiquip_title.png"):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-
