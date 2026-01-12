@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-import httpx
+import httpx  # Async HTTP client for non-blocking API calls
 import uvicorn
 import os
 
@@ -24,6 +24,8 @@ session_storage = {}
 # ==========================================
 # HTML & CSS UI (FULL VERSION)
 # ==========================================
+# This section contains the complete frontend code (HTML/CSS/JS) served as a single string.
+# It includes the chat interface, styling themes (Light/Dark), and client-side logic.
 html_content = """
 <!DOCTYPE html>
 <html lang="en">
@@ -60,10 +62,7 @@ html_content = """
             --input-border: #ddd;
             
             /* Vector Colors */
-            --bot-outline: #103f54;
-            --bot-face: #e0f7fa;
-            --bot-body: #cfd8dc;
-            --bot-cheek: #f48fb1;
+            /* Bot colors removed (using image now) */
 
             --user-outline: #37474f;
             --user-skin: #ffe0b2;
@@ -93,10 +92,7 @@ html_content = """
             --input-border: #444;
 
             /* Vector Colors (Dark Mode) */
-            --bot-outline: #81d4fa;
-            --bot-face: #263238;
-            --bot-body: #37474f;
-            --bot-cheek: #ec407a;
+            /* Bot colors removed (using image now) */
 
             --user-outline: #eceff1;
             --user-skin: #5d4037;
@@ -250,7 +246,7 @@ html_content = """
 
         /* --- VECTOR ICONS --- */
         .avatar-icon {
-            width: 55px; height: 55px; 
+            width: 75px; height: 75px; 
             display: flex; align-items: center; justify-content: center;
             border-radius: 12px;
             margin: 0 15px; flex-shrink: 0;
@@ -262,11 +258,7 @@ html_content = """
         .char-svg { width: 100%; height: 100%; overflow: visible; }
 
         /* Robot CSS Variables */
-        .bot-stroke { stroke: var(--bot-outline); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-        .bot-fill-face { fill: var(--bot-face); }
-        .bot-fill-body { fill: var(--bot-body); }
-        .bot-eye { fill: var(--bot-outline); stroke: none; }
-        .bot-cheek { fill: var(--bot-cheek); opacity: 0.6; stroke: none; }
+        .bot-avatar { width: 100%; height: 100%; object-fit: contain; }
 
         /* User CSS Variables */
         .user-stroke { stroke: var(--user-outline); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
@@ -283,10 +275,10 @@ html_content = """
         .anim-user-idle { animation: userBreathe 4.5s ease-in-out infinite; }
 
         @keyframes heartbeat { 0% { transform: scale(1); } 15% { transform: scale(1.1); } 30% { transform: scale(1); } 45% { transform: scale(1.1); } 60% { transform: scale(1); } 100% { transform: scale(1); } }
-        @keyframes blink { 0%, 90%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+
         
         .anim-bot-thinking { animation: heartbeat 1.5s infinite ease-in-out; }
-        .anim-bot-thinking .bot-eye { transform-origin: center; animation: blink 2s infinite; }
+
 
         /* --- REALISTIC LOADING ANIMATION --- */
         .loading-text {
@@ -413,6 +405,7 @@ html_content = """
     // ===========================================
     // MARKED.JS CONFIGURATION (LINKS & IMAGES)
     // ===========================================
+    // Custom renderer to ensure all links and images open in a new tab.
     const renderer = new marked.Renderer();
 
     // 1. Open links in new tab
@@ -432,37 +425,11 @@ html_content = """
     marked.use({ renderer });
     // ===========================================
 
-    const ROBOT_DRAWING = `
-        <svg viewBox="0 0 100 100" class="char-svg">
-            <line x1="50" y1="20" x2="50" y2="10" class="bot-stroke" />
-            <circle cx="50" cy="8" r="4" class="bot-stroke bot-fill-body" />
-            <path d="M25,50 Q20,50 20,40 Q20,30 25,30" class="bot-stroke bot-fill-body" />
-            <path d="M75,50 Q80,50 80,40 Q80,30 75,30" class="bot-stroke bot-fill-body" />
-            <path d="M30,80 Q50,95 70,80 L70,70 L30,70 Z" class="bot-stroke bot-fill-body" />
-            <rect x="25" y="25" width="50" height="45" rx="18" class="bot-stroke bot-fill-face" />
-            <circle cx="40" cy="45" r="4" class="bot-eye" />
-            <circle cx="60" cy="45" r="4" class="bot-eye" />
-            <path d="M42,55 Q50,62 58,55" class="bot-stroke" style="stroke-width: 2;" />
-            <circle cx="34" cy="50" r="3" class="bot-cheek" />
-            <circle cx="66" cy="50" r="3" class="bot-cheek" />
-        </svg>
-    `;
-
-    const ROBOT_THINKING_DRAWING = `
-        <svg viewBox="0 0 100 100" class="char-svg">
-            <line x1="85" y1="20" x2="90" y2="15" class="bot-stroke" style="stroke: #ff9800;" />
-            <line x1="88" y1="28" x2="94" y2="28" class="bot-stroke" style="stroke: #ff9800;" />
-            <line x1="50" y1="20" x2="50" y2="10" class="bot-stroke" />
-            <circle cx="50" cy="8" r="4" class="bot-stroke bot-fill-body" />
-            <path d="M25,50 Q20,50 20,40 Q20,30 25,30" class="bot-stroke bot-fill-body" />
-            <path d="M75,50 Q80,50 80,40 Q80,30 75,30" class="bot-stroke bot-fill-body" />
-            <path d="M30,80 Q50,95 70,80 L70,70 L30,70 Z" class="bot-stroke bot-fill-body" />
-            <rect x="25" y="25" width="50" height="45" rx="18" class="bot-stroke bot-fill-face" />
-            <circle cx="40" cy="43" r="4" class="bot-eye" />
-            <circle cx="60" cy="43" r="4" class="bot-eye" />
-            <path d="M45,55 Q50,55 55,55" class="bot-stroke" style="stroke-width: 2;" />
-        </svg>
-    `;
+    // --- AVATAR ASSETS ---
+    // Using static image files for the bot avatar.
+    // The thinking state uses the same image but applies a CSS 'heartbeat' animation.
+    const ROBOT_DRAWING = `<img src="/static/bot.png" class="bot-avatar" alt="AskMQ" />`;
+    const ROBOT_THINKING_DRAWING = `<img src="/static/Bot_Thinking.png" class="bot-avatar" alt="AskMQ Thinking" />`;
 
     const USER_DRAWING = `
         <svg viewBox="0 0 100 100" class="char-svg">
@@ -578,6 +545,7 @@ html_content = """
         loadingRow.id = loadingId;
         
         // --- REALISTIC AGENT ANIMATION START ---
+        // Step 1: Show "AskMQ is looking for the requested Info"
         loadingRow.innerHTML = `
             <div class="avatar-icon">${BOT_THINKING_HTML}</div>
             <div class="message-bubble">
@@ -664,10 +632,12 @@ async def chat_endpoint(payload: dict):
     if session_id not in session_storage:
         session_storage[session_id] = []
     
-    # 2. Add User Message
+    # 2. Add User Message to Memory
     session_storage[session_id].append({"role": "user", "content": user_message})
 
     # 3. Context Pinning Logic (First 2 + Last 15)
+    # This ensures the bot remembers the initial context (e.g. Model Number) 
+    # while maintaining the recent conversation flow.
     history = session_storage[session_id]
     if len(history) > 17:
         full_history_payload = history[:2] + history[-15:]
@@ -675,6 +645,8 @@ async def chat_endpoint(payload: dict):
         full_history_payload = history
 
     try:
+        # 4. Async API Call to Boomi
+        # Using httpx.AsyncClient to prevent blocking the server while waiting for external API.
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 BOOMI_URL,
