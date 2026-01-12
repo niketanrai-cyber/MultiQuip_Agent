@@ -401,6 +401,7 @@ html_content = """
     const sendBtn = document.getElementById('send-btn');
     const inputField = document.getElementById('user-input');
     const themeIcon = document.getElementById('theme-icon');
+    const body = document.body;
   
     // ===========================================
     // MARKED.JS CONFIGURATION (LINKS & IMAGES)
