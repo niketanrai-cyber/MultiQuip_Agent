@@ -135,10 +135,10 @@ html_content = """
             flex-shrink: 0;
             box-shadow: var(--shadow-sm);
             z-index: 20;
-            height: 110px;
+            height: 80px;
         }
         
-        .logo-img { height: 100px; width: auto; display: block; }
+        .logo-img { height: 60px; width: auto; display: block; }
         .header-title { font-weight: bold; font-size: 24px; color: var(--text-color); margin-left: 15px;}
         .header-controls { display: flex; gap: 10px; }
 
@@ -246,19 +246,20 @@ html_content = """
 
         /* --- VECTOR ICONS --- */
         .avatar-icon {
-            width: 75px; height: 75px; 
+            width: 85px; height: auto; 
             display: flex; align-items: center; justify-content: center;
             border-radius: 12px;
             margin: 0 15px; flex-shrink: 0;
             transition: all 0.3s ease;
             background: transparent; 
+            overflow: visible;
         }
         .user .avatar-icon { order: 2; margin-left: 15px; margin-right: 0; }
         .bot .avatar-icon { order: 1; margin-right: 15px; margin-left: 0; }
         .char-svg { width: 100%; height: 100%; overflow: visible; }
 
         /* Robot CSS Variables */
-        .bot-avatar { width: 100%; height: 100%; object-fit: contain; }
+        .bot-avatar { width: 100%; height: auto; object-fit: contain; }
 
         /* User CSS Variables */
         .user-stroke { stroke: var(--user-outline); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
@@ -268,7 +269,7 @@ html_content = """
         .user-eye { fill: var(--user-outline); stroke: none; }
 
         /* Animations */
-        @keyframes botFloat { 0% { transform: translateY(0px); } 50% { transform: translateY(-6px); } 100% { transform: translateY(0px); } }
+        @keyframes botFloat { 0% { transform: translateY(0px); } 50% { transform: translateY(-3px); } 100% { transform: translateY(0px); } }
         .anim-bot-idle { animation: botFloat 3s ease-in-out infinite; }
 
         @keyframes userBreathe { 0% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-3px) scale(1.02); } 100% { transform: translateY(0px) scale(1); } }
