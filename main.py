@@ -18,7 +18,7 @@ BOOMI_PASSWORD = "f9c03846-70a1-4d53-bc80-bab2cfdfe35d"
 # ==========================================
 # MEMORY STORAGE
 # ==========================================
-# Stores the last 10 messages for every active user session.
+# Stores the messages for every active user session.
 session_storage = {} 
 
 # ==========================================
@@ -637,25 +637,29 @@ async def chat_endpoint(payload: dict):
     # 2. Add User Message to Memory
     session_storage[session_id].append({"role": "user", "content": user_message})
 
-    # 3. Context Pinning Logic (First 2 + Last 15)
+    # 3. Context Pinning Logic (First 2 + Last 20)
     # This ensures the bot remembers the initial context (e.g. Model Number) 
     # while maintaining the recent conversation flow.
     history = session_storage[session_id]
-    if len(history) > 17:
-        full_history_payload = history[:2] + history[-15:]
+    
+    # Logic: If total history length exceeds 12 (2 pinned + 10 rotated),
+    # slice it to keep the first 2 and the last 10.
+    if len(history) > 12:
+        full_history_payload = history[:2] + history[-10:]
     else:
         full_history_payload = history
 
     try:
         # 4. Async API Call to Boomi
         # Using httpx.AsyncClient to prevent blocking the server while waiting for external API.
-        async with httpx.AsyncClient() as client:
+        # Explicitly setting 300s timeout for all phases (connect, read, write, pool)
+        timeout_config = httpx.Timeout(300.0, connect=300.0, read=300.0, write=300.0)
+        async with httpx.AsyncClient(timeout=timeout_config) as client:
             response = await client.post(
                 BOOMI_URL,
                 headers={"Content-Type": "application/json"},
                 json=full_history_payload, # Sends the list of history
-                auth=(BOOMI_USERNAME, BOOMI_PASSWORD),
-                timeout=120.0
+                auth=(BOOMI_USERNAME, BOOMI_PASSWORD)
             )
             
         if response.status_code == 200:
@@ -687,4 +691,4 @@ if os.path.exists("multiquip.png") or os.path.exists("multiquip_title.png"):
     app.mount("/static", StaticFiles(directory="."), name="static")
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000 , timeout_keep_alive=300)
